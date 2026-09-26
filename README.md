@@ -1,0 +1,102 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# semrulesid
+
+`semrulesid` allows the user to check a structural equation model (SEM)
+written in [`lavaan`](https://lavaan.ugent.be/) (Rosseel, 2012) syntax,
+or supplied as a `lavaan` parameter table or fit object, against a
+number of identification rules from the literature. Rules are specified
+as being necessary and/or sufficient and specific reasons are given when
+a rule is not satisfied or not applicable.
+
+Users should not treat the package output as the sole determinant of
+model identification. Instead, `semrulesid` should be used as a **“quick
+check”** for potential identification issues and outstanding model
+specification concerns.
+
+## Installation
+
+You can install `semrulesid` from CRAN:
+
+``` r
+install.packages("semrulesid")
+```
+
+You can install the development version from
+[GitHub](https://github.com/) with:
+
+``` r
+install.packages("pak")
+pak::pak("zacharyvig/semrulesid")
+```
+
+## Functions
+
+- `id()` takes a `lavaan` model string, parameter table, or model fit
+  and evaluates the identification rules with informative output.
+
+  - The `lav_fun` argument is used to specify the `lavaan` function with
+    which you intend to fit a model (e.g., `"sem"`).
+  - Output includes whether the rule passed, whether the rule is
+    necessary and/or sufficient for identification, and, if
+    `print_msgs = TRUE`, information about why a rule did or did not
+    pass or whether a rule is relevant for the particular type or
+    specification of the model.
+  - Messages are grouped as **Identification failure**, **Sufficient
+    condition not satisfied**, or **Rule not applicable to this model
+    specification**. An identification failure indicates that a
+    necessary condition was not met; a sufficient condition not
+    satisfied means that the corresponding rule cannot establish
+    identification; and a rule not applicable indicates that the rule
+    does not apply to the current specification of the model.
+  - Users can include additional arguments to the function that are
+    passed to `lavaan`’s `lavaanify` function (e.g., `meanstructure`).
+
+> Example: `id(my_model, print_msgs = TRUE, lav_fun = "sem")`
+
+- `scaling()` prints output about how, and if so why, latent variables
+  in the model are scaled.
+
+  - It relays which indicator is the scaling indicator (if applicable),
+    whether the model has mean structure, and reasons why the latent
+    variable is or is not scaled.
+
+> Example: `scaling(my_model, print_msgs = TRUE, lav_fun = "cfa")`
+
+- `id2()` evaluates the two-step rule of identification for full SEMs
+  only.
+
+  - This rule first converts the model into a confirmatory factor
+    analysis model by changing structural relationships to covariances;
+    evaluates the identification of the CFA; then, if identified,
+    converts the original model into a simultaneous equations model
+    (treating latent variables as observed); evaluates the
+    identification of the simultaneous equations model; and finally, if
+    identified, confirms that the original model is identified. See
+    Bollen’s *Elements of Structural Equation Models* (2026) for
+    details.
+
+> Example: `id2(my_model, print_msgs = TRUE, lav_fun = "sem")`
+
+- The package supports piping for comprehensive printing.
+
+> Example: `id(my_model) |> scaling()` or `scaling(my_model) |> id()`
+
+## Example
+
+``` r
+library(semrulesid)
+
+my_model <- '
+  L1 =~ x1 + x2 + x3
+  L2 =~ x4 + x5 + x6
+  L3 =~ x7 + x8 + x9
+  L2 ~ L1
+  L3 ~ L2
+'
+
+id(my_model, meanstructure = FALSE)      # Check identification rules
+id2(my_model, meanstructure = FALSE)     # Check the two-step rule
+scaling(my_model, meanstructure = FALSE) # Check latent-variable scaling
+```
